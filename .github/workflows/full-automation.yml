@@ -75,21 +75,12 @@ jobs:
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
-        run: |
-          ARGS=""
-          if [ -n "${{ github.event.inputs.topic }}" ]; then
-            ARGS="$ARGS --topic '${{ github.event.inputs.topic }}'"
-          fi
-          if [ -n "${{ github.event.inputs.video_type }}" ]; then
-            ARGS="$ARGS --video-type ${{ github.event.inputs.video_type }}"
-          fi
-          if [ -n "${{ github.event.inputs.keyword }}" ]; then
-            ARGS="$ARGS --keyword '${{ github.event.inputs.keyword }}'"
-          fi
-          if [ "${{ github.event.inputs.upload }}" = "true" ]; then
-            ARGS="$ARGS --upload --privacy ${{ github.event.inputs.privacy }}"
-          fi
-          python scripts/full_automation.py $ARGS
+          CI_TOPIC: ${{ github.event.inputs.topic }}
+          CI_VIDEO_TYPE: ${{ github.event.inputs.video_type }}
+          CI_KEYWORD: ${{ github.event.inputs.keyword }}
+          CI_UPLOAD: ${{ github.event.inputs.upload }}
+          CI_PRIVACY: ${{ github.event.inputs.privacy }}
+        run: python scripts/full_automation.py
 
       - name: Upload artifacts
         if: always()

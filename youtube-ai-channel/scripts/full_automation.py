@@ -73,6 +73,17 @@ def main():
     parser.add_argument("--skip-calendar", action="store_true", help="Skip calendar generation")
     args = parser.parse_args()
 
+    if not args.topic and os.environ.get("CI_TOPIC"):
+        args.topic = os.environ["CI_TOPIC"]
+    if not args.video_type and os.environ.get("CI_VIDEO_TYPE"):
+        args.video_type = os.environ["CI_VIDEO_TYPE"]
+    if not args.keyword and os.environ.get("CI_KEYWORD"):
+        args.keyword = os.environ["CI_KEYWORD"]
+    if os.environ.get("CI_UPLOAD") == "true":
+        args.upload = True
+    if os.environ.get("CI_PRIVACY"):
+        args.privacy = os.environ["CI_PRIVACY"]
+
     config = load_config()
     channel_name = config.get("channel_name", "My Channel")
     colors = config.get("video_colors", ["#1a1a2e", "#16213e"])
