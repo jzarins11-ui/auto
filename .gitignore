@@ -1,7 +1,7 @@
 # Secrets / environment
 .env
-config/youtube_credentials.json
-config/youtube_token.json
+**/youtube_credentials.json
+**/youtube_token.json
 
 # Python cache
 __pycache__/

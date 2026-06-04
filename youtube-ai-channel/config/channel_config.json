@@ -41,5 +41,13 @@
     "default_region": "US",
     "max_videos_to_fetch": 50,
     "lookback_days": 30
+  },
+  "video_production": {
+    "background_colors": ["#1a1a2e", "#16213e"],
+    "tts_voice": "en-US-JennyNeural",
+    "tts_rate": "+0%",
+    "resolution": "1920x1080",
+    "fps": 30,
+    "upload_privacy": "unlisted"
   }
 }
