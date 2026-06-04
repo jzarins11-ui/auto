@@ -115,7 +115,7 @@ async def generate_voiceover(script_path: str, output_path: str | None = None):
     import subprocess
     subprocess.run(
         ["ffmpeg", "-y", "-f", "concat", "-safe", "0",
-         "-i", str(concat_list), "-c", "copy", output_path],
+         "-i", str(concat_list), output_path],
         capture_output=True, check=True, timeout=120
     )
 
