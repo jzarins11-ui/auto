@@ -39,7 +39,10 @@ def find_latest_script() -> str | None:
     scripts_dir = Path("content/scripts")
     if not scripts_dir.exists():
         return None
-    md_files = sorted(scripts_dir.glob("*_script.md"), key=os.path.getmtime, reverse=True)
+    md_files = sorted(
+        [f for f in scripts_dir.glob("*.md") if not f.name.endswith("_meta.md")],
+        key=os.path.getmtime, reverse=True,
+    )
     return str(md_files[0]) if md_files else None
 
 
