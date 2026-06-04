@@ -1,0 +1,45 @@
+{
+  "channel_name": "Practical AI Lab",
+  "tagline": "AI Tools That Actually Make Money & Save Time",
+  "niche": "Practical AI Tools + Productivity for Creators & Small Business Owners",
+  "target_audience": "YouTubers, freelancers, small business owners, students, side-hustlers (25-45 years old)",
+  "content_pillars": [
+    "AI Tool Tutorials",
+    "AI Money-Making & Side Hustles",
+    "Tool Comparisons & Reviews",
+    "AI Automation Case Studies",
+    "Quick Tips & Shorts"
+  ],
+  "monetization_focus": [
+    "Affiliate Marketing",
+    "YouTube Ad Revenue",
+    "Digital Products",
+    "Sponsorships"
+  ],
+  "top_affiliates": [
+    "Claude Pro (Anthropic)",
+    "ChatGPT Plus (OpenAI)",
+    "Midjourney",
+    "ElevenLabs",
+    "Runway",
+    "Perplexity Pro",
+    "Notion AI",
+    "Jasper AI",
+    "Copy.ai"
+  ],
+  "model": "deepseek-chat",
+  "posting_schedule": {
+    "monday": "Long-form Tutorial (8-15 min)",
+    "tuesday": "Daily Short (30-60 sec)",
+    "wednesday": "AI Money-Making / Case Study (8-12 min)",
+    "thursday": "Daily Short (30-60 sec)",
+    "friday": "Tool Comparison or Roundup (10-15 min)",
+    "saturday": "Daily Short (30-60 sec)",
+    "sunday": "Rest or lightweight content"
+  },
+  "trend_analysis": {
+    "default_region": "US",
+    "max_videos_to_fetch": 50,
+    "lookback_days": 30
+  }
+}

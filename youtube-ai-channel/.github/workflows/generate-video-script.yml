@@ -1,0 +1,89 @@
+name: 🎬 Generate Video Script
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Video topic (e.g. "How I use Claude to write emails 10x faster")'
+        required: true
+        type: string
+
+      video_type:
+        description: 'Video type'
+        required: true
+        type: choice
+        options:
+          - tutorial
+          - money-making
+          - comparison
+          - case-study
+          - news
+        default: tutorial
+
+      keyword:
+        description: 'Primary SEO keyword (e.g. "Claude email automation")'
+        required: true
+        type: string
+
+      affiliate:
+        description: 'Affiliate product to feature (e.g. "Claude Pro, Notion AI")'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  generate-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 🛎️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🎬 Generate video script
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TOPIC:      ${{ github.event.inputs.topic }}
+          VIDEO_TYPE: ${{ github.event.inputs.video_type }}
+          KEYWORD:    ${{ github.event.inputs.keyword }}
+          AFFILIATE:  ${{ github.event.inputs.affiliate }}
+        run: |
+          python scripts/generate_video_script.py \
+            --topic     "$TOPIC" \
+            --type      "$VIDEO_TYPE" \
+            --keyword   "$KEYWORD" \
+            --affiliate "$AFFILIATE"
+
+      - name: 💾 Commit and push script
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add content/scripts/
+          git diff --staged --quiet && echo "Nothing new to commit" || \
+            (git commit -m "🎬 Script: ${{ github.event.inputs.topic }}" && git push)
+
+      - name: 📋 Summary
+        run: |
+          echo "## ✅ Script Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Topic | ${{ github.event.inputs.topic }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | ${{ github.event.inputs.video_type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Keyword | ${{ github.event.inputs.keyword }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Affiliate | ${{ github.event.inputs.affiliate }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Find your script in \`content/scripts/\`" >> $GITHUB_STEP_SUMMARY
