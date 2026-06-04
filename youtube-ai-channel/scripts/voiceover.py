@@ -109,14 +109,15 @@ async def generate_voiceover(script_path: str, output_path: str | None = None):
         for r in results:
             dur = get_audio_duration(r["file"])
             r["duration"] = dur
-            f.write(f"file '{r['file']}'\n")
+            rel_path = os.path.relpath(r["file"], OUTPUT_DIR)
+            f.write(f"file '{rel_path}'\n")
 
     output_path = output_path or str(OUTPUT_DIR / "voiceover.mp3")
     import subprocess
     subprocess.run(
         ["ffmpeg", "-y", "-f", "concat", "-safe", "0",
          "-i", str(concat_list), output_path],
-        capture_output=True, check=True, timeout=120
+        check=True, timeout=120
     )
 
     timing_file = OUTPUT_DIR / "timing.json"
