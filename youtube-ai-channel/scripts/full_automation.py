@@ -148,14 +148,17 @@ def main():
         sys.exit(1)
 
     output_video = args.output or "content/videos/final.mp4"
-    if not run_step("Assemble video",
+    assemble_args = [
         sys.executable, "scripts/assemble.py",
         "--audio", "content/audio/voiceover.mp3",
         "--output", output_video,
         "--timing", "content/audio/timing.json",
         "--channel", channel_name,
-        "--colors", colors[0], colors[1] if len(colors) > 1 else colors[0]
-    ):
+        "--colors", colors[0], colors[1] if len(colors) > 1 else colors[0],
+    ]
+    if args.keyword:
+        assemble_args.extend(["--keyword", args.keyword])
+    if not run_step("Assemble video", *assemble_args):
         sys.exit(1)
 
     print(f"\n{'='*60}")
