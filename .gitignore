@@ -2,10 +2,12 @@
 .env
 **/youtube_credentials.json
 **/youtube_token.json
+client_secret_*.json
 
 # Python cache
 __pycache__/
 *.pyc
+python
 
 # OS files
 Thumbs.db

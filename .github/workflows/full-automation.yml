@@ -78,7 +78,7 @@ jobs:
           CI_TOPIC: ${{ github.event.inputs.topic }}
           CI_VIDEO_TYPE: ${{ github.event.inputs.video_type }}
           CI_KEYWORD: ${{ github.event.inputs.keyword }}
-          CI_UPLOAD: ${{ github.event.inputs.upload }}
+          CI_UPLOAD: ${{ github.event.inputs.upload || 'true' }}
           CI_PRIVACY: ${{ github.event.inputs.privacy }}
         run: python scripts/full_automation.py
 

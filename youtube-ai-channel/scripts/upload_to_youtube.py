@@ -32,7 +32,7 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 TOKEN_FILE = Path("config/youtube_token.json")
 CREDS_FILE = Path("config/youtube_credentials.json")
-REDIRECT_PORT = 8080
+REDIRECT_PORT = 23456
 
 
 def load_env_credentials() -> dict | None:
