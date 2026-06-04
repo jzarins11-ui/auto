@@ -19,6 +19,9 @@ jobs:
   generate-seo-report:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: youtube-ai-channel
 
     steps:
       - name: 🛎️ Checkout repository
@@ -56,6 +59,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: github.event_name == 'workflow_dispatch'
+    defaults:
+      run:
+        working-directory: youtube-ai-channel
 
     steps:
       - name: 🛎️ Checkout repository

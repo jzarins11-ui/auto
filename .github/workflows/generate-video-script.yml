@@ -38,6 +38,9 @@ jobs:
   generate-script:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: youtube-ai-channel
 
     steps:
       - name: 🛎️ Checkout repository
