@@ -1,0 +1,47 @@
+name: ⚡ Daily Shorts Ideas
+
+on:
+  schedule:
+    # Every day at 6:00 AM UTC (good for planning your morning)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-shorts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 🛎️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: ⚡ Generate Shorts ideas
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/generate_shorts_ideas.py
+
+      - name: 💾 Commit and push Shorts ideas
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add content/shorts/
+          git diff --staged --quiet && echo "Nothing new to commit" || \
+            (git commit -m "⚡ Daily Shorts ideas $(date +%Y-%m-%d)" && git push)
+
+      - name: 📋 Summary
+        run: |
+          echo "## ⚡ Today's Shorts Ideas Ready" >> $GITHUB_STEP_SUMMARY
+          echo "Check \`content/shorts/\` for today's 3 viral Short ideas." >> $GITHUB_STEP_SUMMARY

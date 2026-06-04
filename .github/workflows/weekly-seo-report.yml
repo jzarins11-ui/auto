@@ -1,0 +1,77 @@
+name: 🔍 Weekly SEO Report
+
+on:
+  schedule:
+    # Every Sunday at 8:00 AM UTC — ready for your Monday planning
+    - cron: '0 8 * * 0'
+  workflow_dispatch:
+    inputs:
+      focus_topic:
+        description: 'Optional: specific topic to focus keyword research on'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  generate-seo-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 🛎️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🔍 Generate SEO report
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/generate_seo_report.py
+
+      - name: 💾 Commit and push report
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add content/seo/
+          git diff --staged --quiet && echo "Nothing new to commit" || \
+            (git commit -m "🔍 Weekly SEO report $(date +%Y-%m-%d)" && git push)
+
+      - name: 📋 Summary
+        run: |
+          echo "## 🔍 SEO Report Generated" >> $GITHUB_STEP_SUMMARY
+          echo "Your keyword opportunities for the week are in \`content/seo/\`." >> $GITHUB_STEP_SUMMARY
+
+  generate-description-tags:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: 🛎️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      # This job is a placeholder — the generate-description-tags.yml
+      # workflow handles individual video descriptions on demand.
+      - name: ℹ️ Info
+        run: echo "Run generate-description-tags.yml workflow for per-video metadata."

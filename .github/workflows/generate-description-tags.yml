@@ -1,0 +1,82 @@
+name: 📝 Generate Description & Tags
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_title:
+        description: 'Your exact video title'
+        required: true
+        type: string
+
+      keyword:
+        description: 'Primary SEO keyword'
+        required: true
+        type: string
+
+      affiliate:
+        description: 'Affiliate product to mention in description'
+        required: false
+        type: string
+        default: ''
+
+      duration:
+        description: 'Approximate video duration in minutes'
+        required: false
+        type: string
+        default: '10'
+
+permissions:
+  contents: write
+
+jobs:
+  generate-meta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 🛎️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 📝 Generate description and tags
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VIDEO_TITLE: ${{ github.event.inputs.video_title }}
+          KEYWORD:     ${{ github.event.inputs.keyword }}
+          AFFILIATE:   ${{ github.event.inputs.affiliate }}
+          DURATION:    ${{ github.event.inputs.duration }}
+        run: |
+          python scripts/generate_description_tags.py \
+            --title    "$VIDEO_TITLE" \
+            --keyword  "$KEYWORD" \
+            --affiliate "$AFFILIATE" \
+            --duration  $DURATION
+
+      - name: 💾 Commit and push metadata
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add content/scripts/
+          git diff --staged --quiet && echo "Nothing new to commit" || \
+            (git commit -m "📝 Video meta: ${{ github.event.inputs.video_title }}" && git push)
+
+      - name: 📋 Summary
+        run: |
+          echo "## ✅ Description & Tags Ready" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Title | ${{ github.event.inputs.video_title }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Keyword | ${{ github.event.inputs.keyword }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Duration | ${{ github.event.inputs.duration }} min |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Find your metadata file in \`content/scripts/\` (ends in \`_meta.md\`)" >> $GITHUB_STEP_SUMMARY
