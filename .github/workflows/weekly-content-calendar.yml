@@ -34,7 +34,7 @@ jobs:
 
       - name: 🗓️ Generate content calendar
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: python scripts/generate_content_calendar.py
 
       - name: 💾 Commit and push calendar
