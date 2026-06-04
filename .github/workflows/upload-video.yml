@@ -1,0 +1,72 @@
+name: Upload Video to YouTube
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: 'Public URL of the video file (.mp4)'
+        required: true
+        type: string
+      title:
+        description: 'Video title (leave empty to use generated meta)'
+        required: false
+        type: string
+        default: ''
+      privacy:
+        description: 'Privacy status'
+        required: true
+        type: choice
+        options:
+          - public
+          - unlisted
+          - private
+        default: public
+      meta_file:
+        description: 'Path to _meta.md file in content/scripts/'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: youtube-ai-channel
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download video
+        run: |
+          curl -L -o /tmp/video.mp4 "${{ github.event.inputs.video_url }}"
+          echo "Downloaded: $(ls -lh /tmp/video.mp4 | awk '{print $5}')"
+
+      - name: Upload to YouTube
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.title }}" ]; then
+            ARGS="$ARGS --title '${{ github.event.inputs.title }}'"
+          fi
+          if [ -n "${{ github.event.inputs.meta_file }}" ]; then
+            ARGS="$ARGS --meta-file '${{ github.event.inputs.meta_file }}'"
+          fi
+          python scripts/upload_to_youtube.py \
+            /tmp/video.mp4 \
+            --privacy ${{ github.event.inputs.privacy }} \
+            $ARGS

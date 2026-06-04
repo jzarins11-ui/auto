@@ -104,4 +104,10 @@ echo   1. Edit config\channel_config.json with your channel details
 echo   2. Run: python scripts/generate_content_calendar.py
 echo   3. Push to GitHub for auto-scheduling
 echo.
+echo  To upload videos to YouTube:
+echo   1. https://console.cloud.google.com -> Enable YouTube Data API v3
+echo   2. Credentials -> OAuth 2.0 Client ID -> Desktop app -> Download JSON
+echo   3. Save as config\youtube_credentials.json
+echo   4. Run: python scripts/upload_to_youtube.py path\to\video.mp4
+echo.
 pause
