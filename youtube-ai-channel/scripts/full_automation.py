@@ -153,6 +153,7 @@ def main():
         "--audio", "content/audio/voiceover.mp3",
         "--output", output_video,
         "--timing", "content/audio/timing.json",
+        "--script", script_path,
         "--channel", channel_name,
         "--colors", colors[0], colors[1] if len(colors) > 1 else colors[0],
     ]
