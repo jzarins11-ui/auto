@@ -38,60 +38,46 @@ def build_prompt(config: dict, topic: str, video_type: str,
         "news":        "News + your take. Explain what it means for the viewer. Fast-paced, keep it punchy.",
     }.get(video_type, "General informational video.")
 
-    return f"""You are an expert YouTube scriptwriter for the channel "{config['channel_name']}".
+    return f"""You are a YouTuber making a video for your channel "{config['channel_name']}".
 Niche: {config['niche']}
-Audience: {config['target_audience']}
+Your audience: {config['target_audience']}
 
-VIDEO REQUEST:
-- Topic:      {topic}
-- Type:       {video_type} - {type_guidance}
-- Keyword:    {keyword}
-- Affiliate:  {affiliate}
+TOPIC: {topic}
+TYPE: {video_type} - {type_guidance}
+KEYWORD: {keyword}
+AFFILIATE: {affiliate}
 
-Write a COMPLETE, ready-to-record video script. Use this proven structure:
+Write the script as if you're talking to a friend — natural, conversational, energetic. No corporate speak, no robotic lists. Use contractions, casual phrasing, occasional filler words ("okay?", "right?", "so", "here's the thing"), and vary your sentence length. Sound excited about what you're sharing.
 
-## HOOK (0:00-0:08)
-3-second opening line that stops the scroll. Make a bold claim or ask a curiosity question.
-Then 5-second context setter - why this matters RIGHT NOW.
+Structure the sections like this (use ## as invisible section markers — these are for internal flow, NOT spoken aloud):
 
-## INTRO (0:08-0:45)
-- Reinforce the promise with one concrete result/example
-- Brief credibility statement (1 sentence)
-- "In this video you'll learn exactly how to [X]"
-- Subscribe nudge (natural, not begging)
+## Hook
+One bold line that stops the scroll — a surprising claim or curiosity question. Then immediately explain why the viewer should care RIGHT NOW. Talk to them directly ("you"), not at them.
 
-## MAIN CONTENT
-Break into 3-5 clearly labelled sections (e.g., ## STEP 1: ...).
-For each section:
-- [ON SCREEN] direction for what to show/type/click
-- Spoken script (conversational, not robotic)
-- Any relevant tip or gotcha
+## Intro
+One concrete example or result to build credibility (1-2 sentences). Say what this video will teach them. Brief subscribe ask — keep it casual, like "if you're new here, hit that button so you don't miss the next one."
 
-## AFFILIATE MENTION (natural placement within main content)
-Weave in {affiliate} organically - show it solving a real problem in the video.
+## Body
+3-4 natural sections. Each section starts with a ## header for structure (e.g. ## First things first, ## Now here's where it gets interesting, ## Let me show you, ## The game changer). Within each section, just talk naturally. If there's something visual to show, write [SHOW: description] so the video editor knows what to display. Mention {affiliate} naturally when it solves a real problem — don't make it feel like an ad.
 
-## RECAP (1 min before end)
-3-bullet summary of key takeaways.
+## What you need to remember
+2-3 key takeaways, but NOT as bullet points — weave them into natural sentences like "so the main thing to take away here is..."
 
-## CALL TO ACTION (final 30 sec)
-- Like + subscribe ask (specific reason why)
-- Comment prompt (low-friction question)
-- Next video recommendation (related topic)
-- Link mention (affiliate + any freebie)
+## That's it
+Wrap up with a friendly call to action: like and subscribe with a specific reason, a low-effort comment question, and what video they should watch next. Mention the affiliate link naturally.
 
-ALSO GENERATE (after the script):
-### VIDEO DESCRIPTION (YouTube)
-SEO-rich description, 150-200 words, primary keyword in first 25 words.
-Include timestamps.
-Include affiliate disclaimer line.
+IMPORTANT: The ## headers are for structure only — the spoken script should flow BETWEEN them naturally, not read them aloud. There should be no spoken section titles. No timestamps in the spoken script. No announcing what section you're in. Just talk.
 
-### TAGS
-20 YouTube tags (comma-separated), mix of broad and long-tail.
+After the script, include:
 
-### CHAPTERS
-Timestamp chapters in YouTube format (0:00 Intro, etc.).
+### Description
+150-200 word SEO description, keyword in first 25 words, with timestamps.
 
-Write in a natural, conversational, energetic tone. No corporate-speak.
+### Tags
+20 comma-separated tags.
+
+### Chapters
+YouTube chapter format (0:00 Intro...).
 """
 
 

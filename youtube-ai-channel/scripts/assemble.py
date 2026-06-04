@@ -241,11 +241,11 @@ def classify_section(name: str) -> str:
     upper = name.upper().strip()
     if upper == "HOOK":
         return "hook"
-    if upper in ("INTRO", "INTRODUCTION"):
+    if "INTRO" in upper:
         return "intro"
-    if upper.startswith("RECAP") or "SUMMARY" in upper or "KEY TAKEAWAYS" in upper:
+    if upper.startswith("RECAP") or "SUMMARY" in upper or "KEY TAKEAWAYS" in upper or "REMEMBER" in upper:
         return "recap"
-    if "CALL TO ACTION" in upper or upper == "CTA" or "OUTRO" in upper:
+    if "CALL TO ACTION" in upper or upper == "CTA" or "OUTRO" in upper or upper == "THAT'S IT":
         return "cta"
     return "content"
 
