@@ -1,18 +1,12 @@
 """
 assemble.py
 Assembles video: background images + voiceover + captions.
-- Downloads free stock images from picsum.photos (no API key needed)
-- Ken Burns slow-zoom effect
-- Crossfade transitions between images
-- Better captions with semi-transparent background
-- Falls back to gradient if download fails
 """
 
 import os
 import io
 import json
 import sys
-import random
 import urllib.request
 import argparse
 from pathlib import Path
@@ -23,6 +17,7 @@ from PIL import Image, ImageDraw, ImageFont
 OUTPUT_DIR = Path("content/videos")
 WIDTH, HEIGHT = 1920, 1080
 FONT_CACHE = {}
+_image_cache = []
 
 
 def get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -50,8 +45,9 @@ def hex_to_rgb(hex_color: str) -> tuple:
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 
-def download_images(keyword: str = "", count: int = 8) -> list[Image.Image]:
+def download_images(keyword: str = "", count: int = 6) -> list[Image.Image]:
     images = []
+    urls = []
     if keyword:
         seed = keyword.replace(" ", "-")
         urls = [f"https://picsum.photos/seed/{seed}-{i}/{WIDTH}/{HEIGHT}" for i in range(count)]
@@ -92,7 +88,6 @@ def apply_dark_overlay(img: Image.Image, opacity: float = 0.5) -> Image.Image:
 
 def ken_burns_crop(img: Image.Image, progress: float, zoom: float = 0.15) -> Image.Image:
     w, h = img.size
-    max_scale = 1.0 + zoom
     scale = 1.0 + zoom * progress
     new_w, new_h = int(w / scale), int(h / scale)
     offset_x = int((w - new_w) * 0.5 * progress)
@@ -101,7 +96,7 @@ def ken_burns_crop(img: Image.Image, progress: float, zoom: float = 0.15) -> Ima
     return cropped.resize((w, h), Image.LANCZOS)
 
 
-def draw_caption(draw: ImageDraw.Draw, text: str, width: int, height: int, channel_name: str = ""):
+def draw_caption(draw: ImageDraw.Draw, text: str, width: int, height: int):
     font = get_font(52)
     max_w = width - 400
     words = text.split()
@@ -118,18 +113,15 @@ def draw_caption(draw: ImageDraw.Draw, text: str, width: int, height: int, chann
             current = word
     if current:
         lines.append(current)
-
     line_h = 66
     padding = 24
     total_h = len(lines) * line_h
     start_y = height - total_h - 180
-
     for i, line in enumerate(lines):
         bbox = font.getbbox(line)
         lw = bbox[2] - bbox[0]
         x = (width - lw) // 2
         y = start_y + i * line_h
-
         pill_x0 = x - padding
         pill_y0 = y - padding // 2
         pill_x1 = x + lw + padding
@@ -148,92 +140,98 @@ def draw_channel_name(draw: ImageDraw.Draw, name: str, width: int):
     x = (width - cw) // 2
     pill_x0 = x - 20
     pill_x1 = x + cw + 20
-    draw.rounded_rectangle(
-        [pill_x0, 20, pill_x1, 70],
-        radius=12, fill=(255, 215, 0, 200)
-    )
+    draw.rounded_rectangle([pill_x0, 20, pill_x1, 70], radius=12, fill=(255, 215, 0, 200))
     draw.text((x, 26), name, fill=(0, 0, 0), font=font)
 
 
-def make_frame(
-    img: Image.Image,
-    text: str,
-    progress: float,
-    channel_name: str = "",
-    do_ken_burns: bool = True,
-) -> np.ndarray:
-    if do_ken_burns:
-        frame = ken_burns_crop(img, progress)
-    else:
-        frame = img.copy()
-    frame = apply_dark_overlay(frame, 0.45)
-
-    draw = ImageDraw.Draw(frame)
+def render_caption_frame(text: str, channel_name: str = "") -> np.ndarray:
+    global _image_cache
+    img = _image_cache[0] if _image_cache else create_gradient_bg(["#1a1a2e", "#16213e"])
+    img = apply_dark_overlay(img.copy(), 0.45)
+    draw = ImageDraw.Draw(img)
     if channel_name:
         draw_channel_name(draw, channel_name, WIDTH)
     if text:
-        draw_caption(draw, text, WIDTH, HEIGHT, channel_name)
+        draw_caption(draw, text, WIDTH, HEIGHT)
+    return np.array(img)
+
+
+def render_bg_frame(t: float, images: list, seg_starts: list, seg_texts: list,
+                    seg_durations: list, total_duration: float,
+                    channel_name: str, image_duration: float) -> np.ndarray:
+    if not images:
+        img = create_gradient_bg(["#1a1a2e", "#16213e"])
+        return np.array(apply_dark_overlay(img, 0.45))
+
+    img_idx = min(int(t / image_duration), len(images) - 1)
+    img = images[img_idx]
+    progress_in_image = (t % image_duration) / image_duration
+    frame = ken_burns_crop(img, progress_in_image)
+    frame = apply_dark_overlay(frame, 0.45)
+    draw = ImageDraw.Draw(frame)
+    if channel_name:
+        draw_channel_name(draw, channel_name, WIDTH)
+
+    for i, start in enumerate(seg_starts):
+        end = start + seg_durations[i]
+        if start <= t < end:
+            draw_caption(draw, seg_texts[i], WIDTH, HEIGHT)
+            break
+
     return np.array(frame)
 
 
-def create_bg_video(
+def assemble_video(
     audio_path: str,
     output_path: str,
-    colors: list[str],
+    timing_path: str | None = None,
+    colors: list[str] | None = None,
     channel_name: str = "",
-    caption_frames: list[dict] | None = None,
     keyword: str = "",
 ):
-    from moviepy import (
-        AudioFileClip, ImageClip, CompositeVideoClip,
-        concatenate_videoclips, VideoClip
-    )
+    global _image_cache
+    from moviepy import AudioFileClip, VideoClip
+
+    colors = colors or ["#1a1a2e", "#16213e"]
 
     audio = AudioFileClip(audio_path)
-    duration = audio.duration
+    total_duration = audio.duration
+
+    seg_starts = []
+    seg_texts = []
+    seg_durations = []
+
+    if timing_path and os.path.exists(timing_path):
+        with open(timing_path) as f:
+            segments = json.load(f)
+        current_time = 0.0
+        for seg in segments:
+            dur = seg["duration"]
+            if dur > 1.0:
+                seg_starts.append(current_time)
+                seg_texts.append(seg["text"])
+                seg_durations.append(dur)
+            current_time += dur
 
     print("Downloading background images...")
     images = download_images(keyword, count=6)
     if not images:
         print("No images downloaded, using gradient background")
         images = [create_gradient_bg(colors)]
+    _image_cache = images
 
-    if not caption_frames:
-        caption_frames = [{"text": "", "duration": duration}]
+    image_duration = total_duration / max(len(images), 1)
 
-    clips = []
-    img_idx = 0
-    time_pos = 0.0
+    bg_clip = VideoClip(
+        lambda t: render_bg_frame(
+            t, images, seg_starts, seg_texts, seg_durations,
+            total_duration, channel_name, image_duration
+        ),
+        duration=total_duration,
+    ).with_fps(15)
 
-    for seg in caption_frames:
-        seg_dur = seg["duration"]
-        text = seg.get("text", "")
-        img = images[img_idx % len(images)]
-        img_idx += 1
-
-        seg_clips = []
-        num_frames = max(2, int(seg_dur * 30))
-        for i in range(num_frames):
-            t = i / num_frames
-            frame = make_frame(img, text, t, channel_name, do_ken_burns=(len(images) > 1))
-            seg_clips.append(frame)
-
-        def make_seg_clip(frames, fps=30):
-            clip = VideoClip(lambda t: frames[min(int(t * fps), len(frames) - 1)], duration=seg_dur)
-            return clip.with_fps(fps)
-
-        seg_clip = make_seg_clip(seg_clips)
-        clips.append(seg_clip)
-        time_pos += seg_dur
-
-    if clips:
-        final = concatenate_videoclips(clips, method="compose")
-    else:
-        empty = VideoClip(lambda t: np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8), duration=1)
-        final = empty
-
-    final = final.with_audio(audio)
-    final = final.with_fps(30)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    final = bg_clip.with_audio(audio)
 
     final.write_videofile(
         str(output_path),
@@ -245,29 +243,6 @@ def create_bg_video(
     )
 
     print(f"Video saved: {output_path}")
-
-
-def assemble_video(
-    audio_path: str,
-    output_path: str,
-    timing_path: str | None = None,
-    colors: list[str] | None = None,
-    channel_name: str = "",
-    keyword: str = "",
-):
-    colors = colors or ["#1a1a2e", "#16213e"]
-
-    caption_frames = None
-    if timing_path and os.path.exists(timing_path):
-        with open(timing_path) as f:
-            segments = json.load(f)
-        caption_frames = [
-            {"text": seg["text"], "duration": seg["duration"]}
-            for seg in segments if seg["duration"] > 1.0
-        ]
-
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    create_bg_video(audio_path, output_path, colors, channel_name, caption_frames, keyword)
 
 
 if __name__ == "__main__":
