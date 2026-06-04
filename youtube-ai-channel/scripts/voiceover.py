@@ -24,34 +24,58 @@ def extract_dialogue(script_text: str) -> list[dict]:
     """Parse script markdown into speakable segments with labels."""
     segments = []
     current_section = "Intro"
+    buffer = ""
+
+    def flush_buffer():
+        nonlocal buffer
+        if buffer.strip():
+            text = buffer.strip()
+            text = re.sub(r"^\*\*", "", text)
+            text = re.sub(r"\*\*$", "", text)
+            text = re.sub(r"^-\s*", "", text)
+            text = re.sub(r"^>\s*", "", text)
+            text = text.strip()
+            if len(text) >= 20:
+                segments.append({"section": current_section, "text": text})
+        buffer = ""
 
     for line in script_text.split("\n"):
         section_match = re.match(r"^##\s+(.+)", line)
         if section_match:
+            flush_buffer()
             current_section = section_match.group(1).strip()
-
-        on_screen = re.match(r"^-?\s*\[ON SCREEN\]", line)
-        spoken = re.match(r"^-?\s*(.+)$", line)
+            continue
 
         stripped = line.strip()
-        if not stripped or stripped.startswith("```") or stripped.startswith("["):
+        if not stripped or stripped.startswith("```"):
+            flush_buffer()
             continue
-        if on_screen:
-            continue
-        if stripped.startswith("###"):
+        if stripped.startswith("###") or stripped.startswith("["):
             continue
         if re.match(r"^\d+:\d+", stripped):
+            continue
+        if stripped.startswith("(") and stripped.endswith(")"):
+            continue
+        if "[ON SCREEN]" in stripped or "[VISUAL]" in stripped:
             continue
 
         text = re.sub(r"^\*\*", "", stripped)
         text = re.sub(r"\*\*$", "", text)
         text = re.sub(r"^-\s*", "", text)
         text = text.strip()
-        if len(text) < 10 or text.startswith("(") and text.endswith(")"):
+        if not text:
+            flush_buffer()
             continue
 
-        segments.append({"section": current_section, "text": text})
+        if buffer:
+            buffer += " " + text
+        else:
+            buffer = text
 
+        if len(buffer) > 300:
+            flush_buffer()
+
+    flush_buffer()
     return segments
 
 
