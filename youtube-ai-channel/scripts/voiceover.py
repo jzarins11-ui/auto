@@ -104,21 +104,15 @@ async def generate_voiceover(script_path: str, output_path: str | None = None):
     tasks = [generate_segment_audio(s, i) for i, s in enumerate(segments)]
     results = await asyncio.gather(*tasks)
 
-    concat_list = OUTPUT_DIR / "concat.txt"
-    with open(concat_list, "w") as f:
+    output_path = output_path or str(OUTPUT_DIR / "voiceover.mp3")
+
+    import shutil
+    with open(output_path, "wb") as out:
         for r in results:
             dur = get_audio_duration(r["file"])
             r["duration"] = dur
-            rel_path = os.path.relpath(r["file"], OUTPUT_DIR)
-            f.write(f"file '{rel_path}'\n")
-
-    output_path = output_path or str(OUTPUT_DIR / "voiceover.mp3")
-    import subprocess
-    subprocess.run(
-        ["ffmpeg", "-y", "-f", "concat", "-safe", "0",
-         "-i", str(concat_list), output_path],
-        check=True, timeout=120
-    )
+            with open(r["file"], "rb") as seg:
+                shutil.copyfileobj(seg, out)
 
     timing_file = OUTPUT_DIR / "timing.json"
     with open(timing_file, "w") as f:
