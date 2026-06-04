@@ -145,8 +145,11 @@ def upload_video(
     print(f"Uploaded: https://youtu.be/{video_id}")
 
     if thumbnail_path and os.path.exists(thumbnail_path):
-        youtube.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(thumbnail_path)).execute()
-        print(f"Thumbnail set: {thumbnail_path}")
+        try:
+            youtube.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(thumbnail_path)).execute()
+            print(f"Thumbnail set: {thumbnail_path}")
+        except Exception as e:
+            print(f"Could not set thumbnail (channel needs verification): {e}")
 
     return video_id
 
