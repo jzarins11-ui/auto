@@ -72,22 +72,25 @@ def get_credentials():
         with open(CREDS_FILE) as f:
             client_config = json.load(f)
 
+    refresh = os.environ.get("YT_REFRESH_TOKEN")
+    cid = os.environ.get("YT_CLIENT_ID")
+    csecret = os.environ.get("YT_CLIENT_SECRET")
+    if refresh and cid and csecret:
+        return Credentials(
+            token=None,
+            refresh_token=refresh,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=cid,
+            client_secret=csecret,
+            scopes=SCOPES,
+        )
+
     if not client_config:
         print("No OAuth credentials found.")
         print("Options:")
         print(f"  1. Save OAuth client JSON as {CREDS_FILE}")
         print("  2. Set YT_CLIENT_ID + YT_CLIENT_SECRET in .env")
         print("  3. Set YT_REFRESH_TOKEN in .env for headless use")
-        refresh = os.environ.get("YT_REFRESH_TOKEN")
-        if refresh:
-            return Credentials(
-                token=None,
-                refresh_token=refresh,
-                token_uri="https://oauth2.googleapis.com/token",
-                client_id=os.environ.get("YT_CLIENT_ID", ""),
-                client_secret=os.environ.get("YT_CLIENT_SECRET", ""),
-                scopes=SCOPES,
-            )
         sys.exit(1)
 
     flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
